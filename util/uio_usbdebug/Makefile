@@ -1,54 +1,34 @@
 include ../../.config
 
-ARCHDIR-$(CONFIG_ARCH_ARMV7)	:= armv7
-ARCHDIR-$(CONFIG_ARCH_X86)	:= x86
+ARCHDIR-$(CONFIG_ARCH_ARMV7) := armv7
+ARCHDIR-$(CONFIG_ARCH_X86)	 := x86
 
-# Only Intel chipsets supported, currently.
-OBJ-$(CONFIG_SOUTHBRIDGE_INTEL_COMMON)	+= uio_usbdebug_intel.o
+OBJ-$(CONFIG_SOUTHBRIDGE_INTEL_COMMON)	+= ../../src/southbridge/intel/common/usb_debug.o
+OBJ-$(CONFIG_SOUTHBRIDGE_AMD_AGESA_HUDSON) += ../../src/southbridge/amd/agesa/hudson/enable_usbdebug.o
+OBJ-$(CONFIG_SOUTHBRIDGE_AMD_SB700) += ../../src/southbridge/amd/sb700/enable_usbdebug.o
+OBJ-$(CONFIG_SOUTHBRIDGE_AMD_SB800) += ../../src/southbridge/amd/sb800/enable_usbdebug.o
 
-PROGRAM		:= uio_usbdebug
+PROGRAM	:= uio_usbdebug
 
-CB_SRC		:= $(shell realpath ../../src)
-CB_SOURCES	:= drivers/usb/ehci_debug.c
-CB_INCLUDES	:= \
-		   drivers/usb/ehci.h \
-		   drivers/usb/ehci_debug.h \
-		   drivers/usb/usb_ch9.h
-INCLUDES	:= \
-		   include/device/device.h
-OBJECTS		:= \
-		   uio_usbdebug.o \
-		   drivers/usb/pci_ehci.o \
-		   console/printk.o \
-		   lib/cbmem.o \
-		   $(OBJ-y) \
-		   $(patsubst %.c,%.o,$(CB_SOURCES))
+SRC := $(OBJ-y) ./uio_usbdebug.o ../../src/drivers/usb/ehci_debug.o ../../src/drivers/usb/pci_ehci.o ../../src/drivers/usb/gadget.o
 
-KCONFIG_H	:= ../../src/include/kconfig.h
+INCLUDE := \
+	../../src/drivers/usb/ehci.h \
+	../../src/drivers/usb/ehci_debug.h \
+	../../src/drivers/usb/usb_ch9.h \
 
-CFLAGS		+= \
-		   -m32 -g \
-		   -Wall -Wextra -Werror \
-		   -Wno-unused-parameter -Wno-error=sign-compare
-CPPFLAGS	+= \
-		   -Iinclude/ \
-		   -I../../src/include/ -I../../src/arch/$(ARCHDIR-y)/include/ \
-		   -I../../build/ -include$(KCONFIG_H)
+KCONFIG_H := ../../src/include/kconfig.h
 
-LIBS		:= -lpci -lz
+LIBS := -lpci -lz
+
+CFLAGS := \
+	-I ../../src/include/ \
+	-I ../../src/commonlib/include/ \
+	-I ../../build/ \
+	-I ../../src/arch/$(ARCHDIR-y)/include/ \
+	-include$(KCONFIG_H)
 
 all: $(PROGRAM)
 
-$(PROGRAM): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
-
-$(CB_SOURCES) $(CB_INCLUDES):
-	@mkdir -p $(dir $@)
-	@ln -sf $(CB_SRC)/$@ $@
-
-$(OBJECTS): $(CONFIG_H) $(CB_INCLUDES) $(INCLUDES)
-
-clean:
-	-@rm -rf $(CB_SOURCES) $(CB_INCLUDES) $(OBJECTS) $(PROGRAM)
-
-.PHONY: all clean
+$(PROGRAM): $(SRC)
+	$(CC) $(CFLAGS) -o $@ $(SRC) $(LIBS)

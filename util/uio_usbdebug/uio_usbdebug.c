@@ -24,7 +24,6 @@
 /* coreboot's arch/io.h conflicts with libc's sys/io.h, so declare this here: */
 int ioperm(unsigned long from, unsigned long num, int turn_on);
 
-#include <arch/io.h>
 #include <console/usb.h>
 
 void *ehci_bar;

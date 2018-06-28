@@ -83,8 +83,9 @@ static void remove(struct pci_dev *const pci_dev)
 	pci_disable_device(pci_dev);
 }
 
-static DEFINE_PCI_DEVICE_TABLE(ehci_pci_ids) = {
+const struct pci_device_id ehci_pci_ids[] = {
 	{ PCI_DEVICE(0x8086, 0x27cc) },
+	{ PCI_DEVICE(0x1022, 0x7808) },
 	{ 0, }
 };
 
